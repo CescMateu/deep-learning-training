@@ -1,5 +1,6 @@
 import numpy as np
 from aux_functions import *
+from test_cases import *
 
 def initialize_parameters_L(layers_dims):
 
@@ -94,6 +95,8 @@ def forward_propagation_L(X, parameters, activation_hidden, activation_output):
 	- activation_output: Activation function used in the output layer. Options: 'sigmoid', 'relu', 'tanh'
 
 	Unit tests:
+	X, parameters = L_model_forward_test_case_2hidden()
+	AL, caches = forward_propagation_L(X, parameters, activation_hidden='relu', activation_output='sigmoid')
 
 	'''
 
@@ -105,16 +108,49 @@ def forward_propagation_L(X, parameters, activation_hidden, activation_output):
 
 	# Hidden layers
 	for l in range(1, L):
-		print('Computing hidden layer: ' + str(l))
 		cache['Z' + str(l)] = linear_forward_propagation(cache['A' + str(l-1)], parameters['W' + str(l)], parameters['b' + str(l)])
 		cache['A' + str(l)] = activation_forward_propagation(cache['Z' + str(l)], activation_hidden)
 
 	# Output layer
-	print('Computing output layer: ' + str(L))
 	cache['Z' + str(L)] = linear_forward_propagation(cache['A' + str(L-1)], parameters['W' + str(L)], parameters['b' + str(L)])
-	A_output = activation_forward_propagation(cache['Z' + str(L)], activation_output)
+	AL = activation_forward_propagation(cache['Z' + str(L)], activation_output)
 
-	return(A_output, cache)
+	AL = AL.reshape(1, X.shape[1])
+	assert(AL.shape == (1, X.shape[1]))
+
+	return(AL, cache)
+
+def compute_cost(Y, AL, parameters, lambd = 0.9):
+	'''
+
+	Unit tests:
+	Y, AL = compute_cost_test_case()
+	print("cost = " + str(compute_cost(Y, AL, parameters = [1,2], lambd = 0)))
+
+	'''
+
+	L = len(parameters) // 2
+	m = Y.shape[1]
+	
+	# Basic cost function
+	J = - (1/m) * np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL))
+
+
+	# Regularization part
+	W_norm = 0
+	if lambd > 0:
+
+		for l in range(1, L):
+			W_l = np.linalg.norm(parameters['W' + str(l)])
+			W_norm = W_norm + W_l
+
+		reg =  (lambd / (2*m)) * W_norm
+		J = J + reg
+
+	J = np.squeeze(J)
+	assert(J.shape == ())
+
+	return(J)
 
 def model(X, Y, layers_dims, activation_hidden = 'tanh', activation_output = 'sigmoid'):
 	'''
@@ -124,15 +160,33 @@ def model(X, Y, layers_dims, activation_hidden = 'tanh', activation_output = 'si
 	params = initialize_parameters_L(layers_dims)
 
 	# Forward propagation
-	A = forward_propagation_L(X, params, activation_hidden, activation_output)
+	AL, cache = forward_propagation_L(X, params, activation_hidden, activation_output)
 
-	return(A)
+	# Compute cost
+	cost = compute_cost(Y, AL, params, lambd = 0.9)
+
+	# Backward propagation
+
+	# Update parameters with GD
+	
+	return(AL, cache, params)
+
+
 
 
 X = np.array([[1, 1, 2], [0, 0, 1], [0, 0, 0]])
-Y = np.array([0, 1, 1])
-layer_dims = [X.shape[0], 2, 1]
-print(model(X, Y, layer_dims))
+Y = np.array([1, 1, 1]).reshape(1, X.shape[0])
+layer_dims = [X.shape[0], 2, 4, 5, 7, 1]
+
+
+AL, cache, params = model(X, Y, layer_dims)
+
+print(AL)
+
+
+
+
+
 
 
 

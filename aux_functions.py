@@ -20,5 +20,5 @@ def relu(Z):
 
 	A = np.maximum(Z, 0)
 
-	return None
+	return(A)
 

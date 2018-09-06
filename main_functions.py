@@ -152,48 +152,130 @@ def compute_cost(Y, AL, parameters, lambd = 0.9):
 
 	return(J)
 
-def model(X, Y, layers_dims, activation_hidden = 'tanh', activation_output = 'sigmoid'):
+
+
+def backward_propagation_layer(dA, Z, W, A_prev, activation):
+	'''
+	'''
+
+	m = A_prev.shape[1] # Number of examples
+
+	# Compute dZ
+	if activation == 'sigmoid':
+		dZ = sigmoid_backward(dA, Z)
+
+	elif activation == 'tanh':
+		raise ValueError('tanh_backward() has not been implemented yet')
+		dZ = tanh_backward(dA, Z)
+
+	elif activation == 'relu':
+		dZ = relu_backward(dA, Z)
+
+	# Compute dW and db
+	dW = (1/m) * np.dot(dZ, A_prev.T)
+	db = (1/m) * np.sum(dZ, axis = 1, keepdims = True)
+
+	# Compute dA_prev
+	dA_prev = np.dot(W.T, dZ)
+	
+
+	return dZ, dW, db, dA_prev
+
+def backward_propagation_L(Y, AL, parameters, cache, activation_hidden, activation_output):
+
+	'''
+	Description:
+
+	Parameters:
+	- AL: Array containing the values for the activation output from the last layer (probabilities of the clases)
+	- parameters: Dictionary containing the values for W and b for each layer
+	- cache: Dictionary containing the values for A and Z of the previous layers
+	'''
+
+	# Initialise some parameters
+	L = len(parameters) // 2
+	Y = Y.reshape(AL.shape) # after this line, Y is the same shape as AL
+
+	# Create a new dictionary in which to save the gradients
+	grads = {}
+
+	# Compute the gradient of the output layer as initialization
+	grads['dA' + str(L)] = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+
+	for l in range(L, 0, -1):
+
+		# Decide which activation function to use
+		if l == L:
+			activation_l = activation_output
+		else:
+			activation_l = activation_hidden
+
+		# Backward propagation for layer l
+		dZ, dW, db, dA_prev = backward_propagation_layer(
+			dA = grads['dA' + str(l)], 
+			Z = cache['Z' + str(l)],
+			W = parameters['W' + str(l)],
+			A_prev = cache['A' + str(l-1)],
+			activation = activation_l
+			)
+
+		# Save the results in the grads dictionary
+		grads['dZ' + str(l)] = dZ
+		grads['dW' + str(l)] = dW
+		grads['db' + str(l)] = db
+		grads['dA' + str(l - 1)] = dA_prev
+
+	return(grads)
+
+def update_parameters(parameters, grads, learning_rate):
+	'''
+	'''	
+	L = len(parameters) // 2 # number of layers in the neural network
+
+    # Update rule for each parameter.
+	for l in range(L):
+
+		parameters["W" + str(l+1)] = parameters["W" + str(l+1)] - learning_rate*grads["dW" + str(l+1)]
+		parameters["b" + str(l+1)] = parameters["b" + str(l+1)] - learning_rate*grads["db" + str(l+1)]
+
+	return parameters
+
+
+
+
+def model(X, Y, layers_dims, num_iterations = 100, learning_rate = 0.01, activation_hidden = 'relu', activation_output = 'sigmoid', verbose = False):
 	'''
 	'''
 
 	# Initialize parameters
 	params = initialize_parameters_L(layers_dims)
 
-	# Forward propagation
-	AL, cache = forward_propagation_L(X, params, activation_hidden, activation_output)
+	for i in range(num_iterations):
 
-	# Compute cost
-	cost = compute_cost(Y, AL, params, lambd = 0.9)
+		# Forward propagation
+		AL, cache = forward_propagation_L(X, params, activation_hidden, activation_output)
 
-	# Backward propagation
+		# Compute cost
+		cost = compute_cost(Y, AL, params, lambd = 0.9)
 
-	# Update parameters with GD
-	
-	return(AL, cache, params)
+		# Backward propagation
+		grads = backward_propagation_L(Y, AL, params, cache, activation_hidden, activation_output)
 
+		# Update parameters with GD
+		params = update_parameters(params, grads, learning_rate)
 
+		# Print the cost every 20 iterations
+		if verbose and (i % 20 == 0):
+			print('Cost after iteration {}: {}'.format(i, np.squeeze(cost)))
+
+	return(AL, cache, params, grads)
 
 
 X = np.array([[1, 1, 2], [0, 0, 1], [0, 0, 0]])
 Y = np.array([1, 1, 1]).reshape(1, X.shape[0])
-layer_dims = [X.shape[0], 2, 4, 5, 7, 1]
+layer_dims = [X.shape[0], 2, 5, 3, 1]
 
-
-AL, cache, params = model(X, Y, layer_dims)
-
-print(AL)
-
-
-
-
-
-
-
-
-
-
-
-
+AL, cache, params, grads = model(X, Y, layer_dims, learning_rate = 0.1, verbose = True)
 
 
 

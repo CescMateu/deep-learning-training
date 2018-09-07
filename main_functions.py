@@ -1,6 +1,6 @@
 import numpy as np
 from aux_functions import *
-from test_cases import *
+from testCases import *
 
 def initialize_parameters_L(layers_dims):
 
@@ -120,7 +120,7 @@ def forward_propagation_L(X, parameters, activation_hidden, activation_output):
 
 	return(AL, cache)
 
-def compute_cost(Y, AL, parameters, lambd = 0.9):
+def compute_cost(Y, AL, parameters, lambd):
 	'''
 
 	Unit tests:
@@ -227,6 +227,7 @@ def backward_propagation_L(Y, AL, parameters, cache, activation_hidden, activati
 
 	return(grads)
 
+
 def update_parameters(parameters, grads, learning_rate):
 	'''
 	'''	
@@ -242,8 +243,7 @@ def update_parameters(parameters, grads, learning_rate):
 
 
 
-
-def model(X, Y, layers_dims, num_iterations = 100, learning_rate = 0.01, activation_hidden = 'relu', activation_output = 'sigmoid', verbose = False):
+def model(X, Y, layers_dims, num_iterations = 100, learning_rate = 0.01, lambd = 0, activation_hidden = 'relu', activation_output = 'sigmoid', verbose = False):
 	'''
 	'''
 
@@ -256,7 +256,7 @@ def model(X, Y, layers_dims, num_iterations = 100, learning_rate = 0.01, activat
 		AL, cache = forward_propagation_L(X, params, activation_hidden, activation_output)
 
 		# Compute cost
-		cost = compute_cost(Y, AL, params, lambd = 0.9)
+		cost = compute_cost(Y, AL, params, lambd)
 
 		# Backward propagation
 		grads = backward_propagation_L(Y, AL, params, cache, activation_hidden, activation_output)
@@ -265,17 +265,10 @@ def model(X, Y, layers_dims, num_iterations = 100, learning_rate = 0.01, activat
 		params = update_parameters(params, grads, learning_rate)
 
 		# Print the cost every 20 iterations
-		if verbose and (i % 20 == 0):
+		if verbose and (i % 100 == 0):
 			print('Cost after iteration {}: {}'.format(i, np.squeeze(cost)))
 
 	return(AL, cache, params, grads)
-
-
-X = np.array([[1, 1, 2], [0, 0, 1], [0, 0, 0]])
-Y = np.array([1, 1, 1]).reshape(1, X.shape[0])
-layer_dims = [X.shape[0], 2, 5, 3, 1]
-
-AL, cache, params, grads = model(X, Y, layer_dims, learning_rate = 0.1, verbose = True)
 
 
 

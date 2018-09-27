@@ -3,6 +3,8 @@ import h5py
 
 # Auxiliary functions
 
+# Activation functions
+
 def sigmoid(Z):
 
 	A = 1 / (1 + np.exp(-Z))
